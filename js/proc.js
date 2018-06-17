@@ -1,0 +1,1 @@
+function change(){var mon=Math.round(document.getElementById("mon").value.replace(",","."));document.getElementById("RUB").innerHTML=Math.ceil(mon*110+2)/100;}

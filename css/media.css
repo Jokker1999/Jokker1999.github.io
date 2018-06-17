@@ -1,0 +1,22 @@
+@media all and (orientation:portrait) and (max-width:69.5em){div.content{width:95%;height:auto;margin:0 auto;}
+div.header{width:95%;margin:0 auto;}
+div.footer{display:none;}
+div.rig{clear:both;margin-bottom:10px;}
+.inputsum{margin-left:15px}
+.inputnom{margin-left:15px}
+div.menu a{font-size:14px;}
+.megafon, .tele2, .beeline, .mtc, .yota, .ok_logo, .skype, .wargaming_logo, .tanki, .ros_logo, .domru_logo, .ntv_plus, .telekarta{height:150px;width:150px;margin-left:13px;}
+.title{font-size:12px;}
+.div_line_header{padding-top:15px}
+}
+@media screen and (max-width:69.5em){div.menu a{font-size:14px;}
+div.content{width:95%;height:auto;margin:0 auto;}
+div.header{width:95%;margin:0 auto;}
+div.footer{display:none;}
+div.rig{clear:both;margin-bottom:10px;}
+.inputsum{margin-left:15px}
+.inputnom{margin-left:15px}
+.megafon, .tele2, .beeline, .mtc, .yota, .ok_logo, .skype, .wargaming_logo, .tanki, .ros_logo, .domru_logo, .ntv_plus, .telekarta{height:150px;width:150px;margin-left:13px;}
+.title{font-size:12px;}
+.div_line_header{padding-top:15px}  ntv_plus
+}

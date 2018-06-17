@@ -1,0 +1,39 @@
+RewriteEngine On
+RewriteRule ^megafon/([^/]*)(/?)+$ megafon.php?reg=$1 [L]
+RewriteRule ^tele/([^/]*)(/?)+$ tele.php?reg=$1 [L]
+RewriteRule ^beeline/([^/]*)(/?)+$ beeline.php?reg=$1 [L]
+RewriteRule ^mtc/([^/]*)(/?)+$ mtc.php?reg=$1 [L]
+RewriteRule ^yota/([^/]*)(/?)+$ yota.php?reg=$1 [L]
+RewriteRule ^ok/([^/]*)(/?)+$ ok.php?reg=$1 [L]
+RewriteRule ^skype/([^/]*)(/?)+$ skype.php?reg=$1 [L]
+RewriteRule ^wargaming/([^/]*)(/?)+$ wargaming.php?reg=$1 [L]
+RewriteRule ^tanki/([^/]*)(/?)+$ tanki.php?reg=$1 [L]
+RewriteRule ^rstug/([^/]*)(/?)+$ rstug.php?reg=$1 [L]
+RewriteRule ^beel_tv/([^/]*)(/?)+$ beel_tv.php?reg=$1 [L]
+RewriteRule ^dom_kab/([^/]*)(/?)+$ dom_kab.php?reg=$1 [L]
+RewriteRule ^dom_cifr/([^/]*)(/?)+$ dom_cifr.php?reg=$1 [L]
+
+RewriteRule ^ntv_plus/([^/]*)(/?)+$ ntv_plus.php?reg=$1 [L]
+RewriteRule ^telekarta/([^/]*)(/?)+$ telekarta.php?reg=$1 [L]
+
+RewriteRule ^partner/?$		partner.php [L]
+RewriteRule ^success/?$		success.php [L]
+RewriteRule ^fail/?$		fail.php [L]
+
+
+  
+# Enable Deflate
+AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/x-javascript
+  
+<ifModule mod_expires.c>
+  ExpiresActive On
+  ExpiresDefault "access plus 1 seconds"
+  ExpiresByType text/html "access plus 1 seconds"
+  ExpiresByType image/x-icon "access plus 2592000 seconds"
+  ExpiresByType image/gif "access plus 2592000 seconds"
+  ExpiresByType image/jpeg "access plus 2592000 seconds"
+  ExpiresByType image/png "access plus 2592000 seconds"
+  ExpiresByType text/css "access plus 604800 seconds"
+  ExpiresByType text/javascript "access plus 216000 seconds"
+  ExpiresByType application/x-javascript "access plus 216000 seconds"
+</ifModule>
