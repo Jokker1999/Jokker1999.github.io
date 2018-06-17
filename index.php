@@ -1,33 +1,280 @@
-<?php //004ff
-// IONCUBE ENCODER 8.3 EVALUATION
-// THIS LICENSE MESSAGE IS ONLY ADDED BY THE EVALUATION ENCODER AND
-// IS NOT PRESENT IN PRODUCTION ENCODED FILES
+<?php
+//error_reporting(0);
 
-if(!extension_loaded('ionCube Loader')){$__oc=strtolower(substr(php_uname(),0,3));$__ln='ioncube_loader_'.$__oc.'_'.substr(phpversion(),0,3).(($__oc=='win')?'.dll':'.so');if(function_exists('dl')){@dl($__ln);}if(function_exists('_il_exec')){return _il_exec();}$__ln='/ioncube/'.$__ln;$__oid=$__id=realpath(ini_get('extension_dir'));$__here=dirname(__FILE__);if(strlen($__id)>1&&$__id[1]==':'){$__id=str_replace('\\','/',substr($__id,2));$__here=str_replace('\\','/',substr($__here,2));}$__rd=str_repeat('/..',substr_count($__id,'/')).$__here.'/';$__i=strlen($__rd);while($__i--){if($__rd[$__i]=='/'){$__lp=substr($__rd,0,$__i).$__ln;if(file_exists($__oid.$__lp)){$__ln=$__lp;break;}}}if(function_exists('dl')){@dl($__ln);}}else{die('The file '.__FILE__." is corrupted.\n");}if(function_exists('_il_exec')){return _il_exec();}echo('Site error: the file <b>'.__FILE__.'</b> requires the ionCube PHP Loader '.basename($__ln).' to be installed by the website operator. If you are the website operator please use the <a href="http://www.ioncube.com/lw/">ionCube Loader Wizard</a> to assist with installation.');exit(199);
+include('conf.php');
+
+$site=$_SERVER['HTTP_HOST'];
+
+@mysql_query('set character_set_client="cp1251"');
+@mysql_query('set character_set_results="cp1251"');
+@mysql_query('set collation_connection="cp1251_general_ci"');
+
+
+ini_set('session.use_cookies', 'On');
+ini_set('session.use_trans_sid', 'Off');
+session_set_cookie_params(0, '/');
+
+session_start();
+
+$time=time()+$time_move*3600;
+$start_time=strtotime($start_data);
+$work_time=floor(($time-$start_time)/(24*3600));
+
+
+if($start_time-$time<=0){
+if($d_isum!=0){
+$d_max=$d_max+$d_isum*floor(($time-$start_time)/($d_itime*3600));
+if($d_max>$d_istop){ $d_max=$d_istop; }
+}
+}
+
+
+// ======================================== IP ====================================================================================
+
+if(getenv('HTTP_CLIENT_IP') && strcasecmp(getenv('HTTP_CLIENT_IP'),'unknown'))
+$ip=getenv('HTTP_CLIENT_IP');
+elseif(getenv('HTTP_X_FORWARDED_FOR') && strcasecmp(getenv('HTTP_X_FORWARDED_FOR'), 'unknown'))
+$ip=getenv('HTTP_X_FORWARDED_FOR');
+elseif(getenv('REMOTE_ADDR') && strcasecmp(getenv("REMOTE_ADDR"), 'unknown'))
+$ip=getenv('REMOTE_ADDR');
+elseif(!empty($_SERVER['REMOTE_ADDR']) && strcasecmp($_SERVER['REMOTE_ADDR'], 'unknown'))
+$ip=$_SERVER['REMOTE_ADDR'];
+else{$ip='unknown';}
+
+
+// ======================================== ПЕРЕХОД РЕФЕРАЛА ====================================================================================
+
+if(!empty($_GET['ref'])){
+session_unset();
+$_GET['ref']=preg_replace("#[^a-z\_\-0-9]+#i",'',$_GET['ref']);
+if($_GET['ref']!=''){
+$refq=mysql_query("SELECT login FROM users WHERE login='".$_GET['ref']."'");
+if(mysql_num_rows($refq)>0){
+$refm=mysql_fetch_row($refq);
+$_SESSION['ref_login']=$refm[0];
+}
+}
+}
+
+// ======================================== АВТОРИЗАЦИЯ ====================================================================================
+
+define('SID',session_id());
+
+// ФУНКЦИЯ ВХОДА
+
+function login($uname,$qiwi){
+$q=mysql_query("SELECT uid,login,qiwi,ref FROM users WHERE login='$uname' AND qiwi='$qiwi';");
+$user=mysql_fetch_row($q);
+
+if(!empty($user)) {
+session_unset();
+$_SESSION['uid']=$user[0];
+$_SESSION['login']=$user[1];
+$_SESSION['qiwi']=$user[2];
+$_SESSION['ref']=$user[3];
+$_SESSION['can']=1;
+return true;
+}
+else{
+return false;
+}
+}
+
+//  ЕСЛИ АВТОРИЗОВАН, БЕРЁМ АНКЕТУ ИЗ СЕССИИ
+
+if(!empty($_SESSION['uid']) && !empty($_SESSION['login']) && !empty($_SESSION['qiwi']) && isset($_SESSION['ref'])) {
+define('USER_LOGGED',true);
+$u_id=$_SESSION['uid'];
+$u_login=$_SESSION['login'];
+$u_qiwi=$_SESSION['qiwi'];
+$u_ref=$_SESSION['ref'];
+}
+else { define('USER_LOGGED',false); }
+
+
+// ПРИЁМ ДАННЫХ ИЗ ФОРМЫ
+
+if (!empty($_POST['login']) && !empty($_POST['qiwi'])) {
+$_POST['login']=preg_replace("#[^a-z\_\-0-9]+#i",'',$_POST['login']);
+$_POST['qiwi']=preg_replace('#[^a-zA-Z\-\_0-9]+#','',$_POST['qiwi']);
+$_POST['qiwi']=md5($_POST['qiwi']);
+if(login($_POST['login'],$_POST['qiwi'])){ header('Refresh: 0'); exit; }
+else{ $wrong_lq=1; }
+}
+
+
+// ========================================  ОНЛАЙН ЮЗЕРЫ  ==============================================================================
+
+function count_online($ip,$time){
+if($ip!='unknown'){
+$ip=preg_replace("#[^0-9]+#i",'',$ip);
+$last_time=$time+20*60;
+$result=mysql_query("SELECT last_time FROM online WHERE ip='$ip'");
+if(mysql_num_rows($result)>0){ mysql_query("UPDATE online SET last_time=$last_time WHERE ip='$ip' LIMIT 1"); }
+else{ mysql_query("INSERT INTO online (ip,last_time) VALUES ('$ip',$last_time)"); }
+mysql_query('DELETE FROM online WHERE last_time<'.$time);
+}
+return mysql_num_rows(mysql_query('SELECT * FROM online'));
+}
+
+
+$dataq=mysql_query("SELECT * FROM data");
+$d=mysql_fetch_row($dataq);
+
+$d_users=$d[0];
+$d_vklad=$d[1];
+$d_popolnenie=$d[2];
+$d_vyvod=$d[3];
+$d_premod_r=$d[4];
+$d_count_r=$d[5];
+$d_plus=$d[6];
+$d_with=$d[7];
+$d_plus_n=$d[8];
+$d_with_n=$d[9];
+$d_new_u=$d[10];
+
+$free=$d_plus-$d_with-($d_plus*($tocom/100));
+
+if($start_time-$time>0){
+$d_vklad=1;
+$d_popolnenie=1;
+$d_vyvod=1;
+}
+
+$uu=substr($d_users,-2);
+$ux1=array(2,3,4,22,23,24,32,33,34,42,43,44,52,53,54,62,63,64,72,73,74,82,83,84,92,93,94);
+$ux2=array(1,21,31,41,51,61,71,81,91);
+$ut='Участников';
+if(in_array($uu,$ux1)){ $ut='Участника'; }
+elseif(in_array($uu,$ux2)){ $ut='Участник'; }
 ?>
-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
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" >
+<head>
+<meta http-equiv="content-type" content="text/html; charset=windows-1251" />
+<title>QIWI-EGGS КИВИ-Умножитель</title>
+<link rel="icon" href="images/icon.png" type="image/x-icon" />
+<link rel="shortcut icon" href="images/icon.png" type="image/x-icon" />
+<link rel="stylesheet" href="css/style.css" type="text/css" />
+<link rel="stylesheet" href="css/pages.css" type="text/css" />
+<link rel="stylesheet" href="css/cabinet.css" type="text/css" />
+<script type="text/javascript" src="js.js"></script>
+</head>
+<body>
+
+<br>
+
+<table class="index_top" align="center" cellpadding="0px" cellspacing="0px">
+<tr>
+<td height="105px"></td>
+<td align="right"></td>
+</tr>
+<tr>
+<td class="index_menu" colspan="2">
+<a href="/">Главная</a>
+<a href="/?page=marketing">Маркетинг</a>
+<a href="/?page=faq">Вопрос-Ответ</a>
+<a href="/?page=advert" style="background:none;margin:0;padding:0;">Баннеры</a>
+</td></tr>
+<tr><td class="index_vklady" colspan="2"></td></tr>
+<tr><td class="index_center" colspan="2"></td></tr>
+<tr><td class="index_referalu" colspan="2">
+
+</td></tr>
+<tr>
+<td class="index_stat_left"><font color="#77AF1B"><?php echo $d_users; ?></font> <font color="#FF962D"><?php echo $ut; ?></font></td>
+<td class="index_stat_right">
+<span class="index_stat_plus">ПОПОЛНИЛИ: <?php echo number_format($d_plus,2,'.',','); ?> РУБ</span>
+<span class="index_stat_with">ВЫВЕЛИ: <?php echo number_format($d_with,2,'.',','); ?> РУБ</span>
+<span class="index_stat_free">БАЛАНС: <?php echo number_format($free,2,'.',','); ?> РУБ</span>
+</td>
+</tr>
+</table>
+
+
+
+<table class="osnova_table" align="center" cellpadding="0px" cellspacing="0px" width="980px">
+<tr>
+<td class="osnova_left">
+
+
+
+
+<?php if(!USER_LOGGED){ ?>
+
+<?php if(!empty($wrong_lq)){ echo '<div class="wrong_lq">Неверный логин-кошелёк</div>'; } ?>
+
+<div class="osnova_title">Вход в аккаунт</div>
+
+<table class="osnova_vhod" cellpadding="0px" cellspacing="0px">
+<tr>
+<td colspan="2">
+<form id="enter" action="/" method="POST" style="margin:0;padding:0">
+<input class="osnova_vhod_input_login" type="text" name="login" placeholder="Логин" maxlength="20">
+<input class="osnova_vhod_input_qiwi" type="text" name="qiwi" placeholder="Пароль" maxlength="30">
+</form>
+</td>
+</tr>
+<tr>
+<td><a class="osnova_vhod_registration" href="/?page=registration">Регистрация</a></td>
+<td align="right"><a class="osnova_vhod_enter" href="javascript:with(document.getElementById('enter')){ submit(); }">Войти</a></td>
+</tr>
+<tr><td colspan="2"><br></td></tr>
+</table>
+
+<?php } else { ?>
+
+<div class="osnova_title">Личный кабинет  [<?php echo("$u_login"); ?>]</div>
+
+<div class="cabinet">
+<a href="/?page=vklady">Мои вклады</a>
+<a href="/?page=popolnit">Пополнить баланс</a>
+<a href="/?page=vyvesti">Вывести деньги</a>
+<a href="/?page=refs">Мои рефералы</a>
+<a href="/logout.php">Выход</a>
+
+</div>
+
+<?php } ?>
+
+
+<div class="osnova_title">Мы принимаем</div>
+
+<div class="osnova_obmen">
+<center><a href="https://w.qiwi.com/eggs/main.action" target="_blank"><img src="/images/eggs.png"></a></center>
+<center><a href="https://w.qiwi.com/eggs/main.action" target="_blank">QIWI Яйца</a></center>
+</div>
+
+
+<div class="osnova_projects_bottom"></div>
+
+<br>
+<div class="osnova_online">На сайте: <font color="#FF8D1C"><?php echo count_online($ip,$time); ?></font></div>
+
+
+
+</td>
+<td class="osnova_right">
+
+<?php
+$nay=0;
+if(!empty($_GET['page'])){
+$req=$_GET['page'];
+$req=str_replace('/?page=','',$req);
+if(in_array($req,$inc)){ $nay=1; include ('pages/'.$req.'.php'); }
+if(USER_LOGGED && in_array($req,$inc_cab)){ $nay=1; include ('cabinet/'.$req.'.php'); }
+if(!USER_LOGGED && $req=='registration'){ $nay=1; include ('pages/registration.php'); }
+}
+
+
+if($nay!=1){ include ('pages/main.php'); }
+?>
+
+</td>
+</tr>
+</table>
+
+
+<table align="center" cellpadding="0px" cellspacing="0px">
+<tr><td class="footer"></td></tr>
+</table>

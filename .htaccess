@@ -1,39 +1,84 @@
+AddDefaultCharset windows-1251
+
 RewriteEngine On
-RewriteRule ^megafon/([^/]*)(/?)+$ megafon.php?reg=$1 [L]
-RewriteRule ^tele/([^/]*)(/?)+$ tele.php?reg=$1 [L]
-RewriteRule ^beeline/([^/]*)(/?)+$ beeline.php?reg=$1 [L]
-RewriteRule ^mtc/([^/]*)(/?)+$ mtc.php?reg=$1 [L]
-RewriteRule ^yota/([^/]*)(/?)+$ yota.php?reg=$1 [L]
-RewriteRule ^ok/([^/]*)(/?)+$ ok.php?reg=$1 [L]
-RewriteRule ^skype/([^/]*)(/?)+$ skype.php?reg=$1 [L]
-RewriteRule ^wargaming/([^/]*)(/?)+$ wargaming.php?reg=$1 [L]
-RewriteRule ^tanki/([^/]*)(/?)+$ tanki.php?reg=$1 [L]
-RewriteRule ^rstug/([^/]*)(/?)+$ rstug.php?reg=$1 [L]
-RewriteRule ^beel_tv/([^/]*)(/?)+$ beel_tv.php?reg=$1 [L]
-RewriteRule ^dom_kab/([^/]*)(/?)+$ dom_kab.php?reg=$1 [L]
-RewriteRule ^dom_cifr/([^/]*)(/?)+$ dom_cifr.php?reg=$1 [L]
+RewriteCond %{REQUEST_METHOD} POST
+RewriteCond %{HTTP_USER_AGENT} ^$
+RewriteRule (.*) http://%{REMOTE_ADDR} [R=301,L]
 
-RewriteRule ^ntv_plus/([^/]*)(/?)+$ ntv_plus.php?reg=$1 [L]
-RewriteRule ^telekarta/([^/]*)(/?)+$ telekarta.php?reg=$1 [L]
+FileETag MTime Size
+<ifmodule mod_expires.c>
+<filesmatch "\.(jpg|gif|png|css|js)$">
+ExpiresActive on
+ExpiresDefault "access plus 1 year"
+</filesmatch>
+</ifmodule>
 
-RewriteRule ^partner/?$		partner.php [L]
-RewriteRule ^success/?$		success.php [L]
-RewriteRule ^fail/?$		fail.php [L]
+AddOutputFilterByType DEFLATE text/html text/plain text/xml application/xml application/xhtml+xml text/javascript text/css application/x-javascript
+BrowserMatch ^Mozilla/4 gzip-only-text/html
+BrowserMatch ^Mozilla/4.0[678] no-gzip
+BrowserMatch bMSIE !no-gzip !gzip-only-text/html
+
+php_value allow_url_include off
+php_value allow_url_fopen off
+
+Options -Indexes
 
 
-  
-# Enable Deflate
-AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/x-javascript
-  
-<ifModule mod_expires.c>
-  ExpiresActive On
-  ExpiresDefault "access plus 1 seconds"
-  ExpiresByType text/html "access plus 1 seconds"
-  ExpiresByType image/x-icon "access plus 2592000 seconds"
-  ExpiresByType image/gif "access plus 2592000 seconds"
-  ExpiresByType image/jpeg "access plus 2592000 seconds"
-  ExpiresByType image/png "access plus 2592000 seconds"
-  ExpiresByType text/css "access plus 604800 seconds"
-  ExpiresByType text/javascript "access plus 216000 seconds"
-  ExpiresByType application/x-javascript "access plus 216000 seconds"
-</ifModule>
+
+
+# Скрытие ошибок
+#php_flag display_startup_errors off
+#php_flag display_errors off
+#php_flag html_errors off
+#php_value docref_root 0
+#php_value docref_ext 0
+
+php_flag register_globals off
+
+ErrorDocument 404 /
+
+#Блокируем плохих ботов и роботов
+SetEnvIfNoCase user-Agent ^FrontPage [NC,OR]
+SetEnvIfNoCase user-Agent ^Java.* [NC,OR]
+SetEnvIfNoCase user-Agent ^Microsoft.URL [NC,OR]
+SetEnvIfNoCase user-Agent ^MSFrontPage [NC,OR]
+SetEnvIfNoCase user-Agent ^Offline.Explorer [NC,OR]
+SetEnvIfNoCase user-Agent ^[Ww]eb[Bb]andit [NC,OR]
+SetEnvIfNoCase user-Agent ^Zeus [NC]
+
+<limit get="" post="" head="">
+Order Allow,Deny
+Allow from all
+Deny from env=bad_bot
+</limit>
+
+#Защищаем .htaccess файл
+<files .htaccess>
+order allow,deny
+deny from all
+</files>
+
+#Включаем отслеживание сим-ссылок
+Options +FollowSymLinks
+#Запускаем url_rewriting
+RewriteEngine On
+#Блокируем все ссылки, содержащие <script>
+RewriteCond %{QUERY_STRING} (\<|%3C).*script.*(\>|%3E) [NC,OR]
+#Блокируем все скрипты, которые пытаются изменить переменные PHP Globals:
+RewriteCond %{QUERY_STRING} GLOBALS(=|\[|\%[0-9A-Z]{0,2}) [OR]
+#Блокируем все скрипты, которые пытаются изменить переменную _REQUEST:
+RewriteCond %{QUERY_STRING} _REQUEST(=|\[|\%[0-9A-Z]{0,2})
+#Перенаправляем все подобные на страницу с ошибкой 403 - запрещено
+RewriteRule ^(.*)$ index.php [F,L]
+
+#Запрещаем просмотр содержимого папки
+Options All -Indexes
+
+# Необходимо для ЧПУ.
+RewriteEngine On
+RewriteBase /
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+
+RewriteRule ^\?\=(.*)$ index.php?p=$1 [L,QSA]
